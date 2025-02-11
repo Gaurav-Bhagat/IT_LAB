@@ -1,6 +1,7 @@
 import threading
 import socket
-alias = input('Choose an alias >>> ')
+
+alias = input('Choose an username >>> ')
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('127.0.0.1', 50000))
 
@@ -16,24 +17,30 @@ def client_receive():
             else:
                 print(message)
         except:
-            print('Error!')
+            print('Error! Connection closed.')
             client.close()
             break
-
 
 def client_send():
     global client_running
     while True:
         msg = input("")
-        message = f'{alias}: {msg}'
-        if(msg == 'EXIT'):
+        
+        if msg == 'EXIT':
             client.send(msg.encode('utf-8'))
             client.close()
             client_running = False
             break
-        else:
+        
+        elif msg.startswith('@'):  # Private message format: @alias message
+            client.send(msg.encode('utf-8'))
+        
+        elif msg.startswith('#(') and ')' in msg:  # Group message format: #(user1 user2) message
+            client.send(msg.encode('utf-8'))
+        
+        else:  # General broadcast message
+            message = f'{alias}: {msg}'
             client.send(message.encode('utf-8'))
-
 
 receive_thread = threading.Thread(target=client_receive)
 receive_thread.start()
